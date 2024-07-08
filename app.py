@@ -1,16 +1,20 @@
-import os
 import requests
 import json
 from datetime import datetime, timedelta
 import folium
 from folium.plugins import HeatMap
-from flask import Flask, send_from_directory
+from flask import Flask, render_template_string
 
 app = Flask(__name__)
 
 @app.route('/')
 def home():
-    return send_from_directory('static', 'colorado_reports_map_with_heat.html')
+    # Generate the map dynamically
+    colorado_map = generate_map()
+    
+    # Render the map as HTML
+    map_html = colorado_map._repr_html_()  # Get the HTML representation of the map
+    return render_template_string(map_html)
 
 def generate_map():
     # Calculate the date range for the last week
@@ -50,19 +54,10 @@ def generate_map():
         # Add heat map layer
         HeatMap(heat_data).add_to(colorado_map)
 
-        # Save the map to an HTML file in the static directory
-        save_path = os.path.join('static', 'colorado_reports_map_with_heat.html')
-        colorado_map.save(save_path)
-        print(f"Map with heat map overlay has been created and saved to '{save_path}'")
+        return colorado_map
     else:
         print(f"Failed to retrieve data: {response.status_code}")
+        return None
 
 if __name__ == "__main__":
-    # Ensure the static directory exists
-    os.makedirs('static', exist_ok=True)
-
-    # Generate the map
-    generate_map()
-
-    # Start Flask server
     app.run(host='0.0.0.0', port=5000, debug=True)
