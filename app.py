@@ -1,5 +1,4 @@
 import requests
-import json
 from datetime import datetime, timedelta
 import folium
 from folium.plugins import HeatMap
@@ -30,7 +29,7 @@ def generate_map():
     if response.status_code == 200:
         data = response.json()
 
-        # Filter reports for those of type 'HA' and in Colorado ('CO')
+        # Filter reports for hail ('HA') reports in Colorado ('CO')
         colorado_reports = [report for report in data if report.get('Type') == 'HA' and report.get('St') == 'CO']
 
         # Create a map centered on Colorado
@@ -41,13 +40,16 @@ def generate_map():
         for report in colorado_reports:
             lat = float(report.get('Lat')) / 100.0  # Convert to decimal degrees
             lon = float(report.get('Lon')) / -100.0  # Convert to decimal degrees
+            hail_size = report.get('Size', 'Unknown')  # Get hail size, default to 'Unknown' if not present
+            popup_text = f"Hail Size: {hail_size}\"<br>{report.get('Remark', 'No remark')}"
+
             folium.Marker(
                 location=[lat, lon],
-                popup=f"{report.get('Type')}: {report.get('Remark')}",
+                popup=popup_text,
                 icon=folium.Icon(color='blue', icon='info-sign')
             ).add_to(colorado_map)
 
-        # Convert points to list of lat-lon pairs
+        # Convert points to list of lat-lon pairs for heat map
         heat_data = [[float(report.get('Lat')) / 100.0, float(report.get('Lon')) / -100.0] for report in colorado_reports]
 
         # Add heat map layer
