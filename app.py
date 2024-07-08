@@ -26,17 +26,12 @@ def generate_map():
 
     # Make the request
     response = requests.get(url)
- if response.status_code == 200:
-        data = response.json()
-
-        # Filter reports for those in Colorado
-        colorado_reports = [report for report in data if report.get('Type') == 'HA']
-    # Check if the request was successful
+    
     if response.status_code == 200:
         data = response.json()
 
-        # Filter reports for those in Colorado
-        colorado_reports = [report for report in data if report.get('St') == 'CO']
+        # Filter reports for those of type 'HA' and in Colorado ('CO')
+        colorado_reports = [report for report in data if report.get('Type') == 'HA' and report.get('St') == 'CO']
 
         # Create a map centered on Colorado
         map_center = [39.5501, -105.7821]  # Latitude and Longitude of Colorado's approximate center
