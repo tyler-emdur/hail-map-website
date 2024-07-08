@@ -26,7 +26,11 @@ def generate_map():
 
     # Make the request
     response = requests.get(url)
+ if response.status_code == 200:
+        data = response.json()
 
+        # Filter reports for those in Colorado
+        colorado_reports = [report for report in data if report.get('Type') == 'HA']
     # Check if the request was successful
     if response.status_code == 200:
         data = response.json()
