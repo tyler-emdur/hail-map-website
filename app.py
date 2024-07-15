@@ -4,7 +4,9 @@ import folium
 from folium.plugins import HeatMap
 from flask import Flask, render_template_string
 from geopy.geocoders import Nominatim
+from geopy.exc import GeocoderTimedOut, GeocoderServiceError
 from collections import Counter
+import time
 
 app = Flask(__name__)
 
@@ -46,6 +48,15 @@ def home():
     
     return render_template_string(html_template)
 
+def reverse_geocode(geolocator, lat, lon, retries=3, backoff_factor=0.3):
+    for attempt in range(retries):
+        try:
+            return geolocator.reverse(f"{lat},{lon}")
+        except (GeocoderTimedOut, GeocoderServiceError) as e:
+            print(f"Geocoding error: {e}. Retrying in {backoff_factor * (2 ** attempt)} seconds...")
+            time.sleep(backoff_factor * (2 ** attempt))
+    return None
+
 def generate_map():
     # Calculate the date range for the last two weeks
     end_date = datetime.now().strftime('%Y%m%d')
@@ -70,13 +81,13 @@ def generate_map():
         # Prepare heat map data and collect zip codes
         heat_data = []
         zip_codes = []
-        geolocator = Nominatim(user_agent="hail_map_app")
+        geolocator = Nominatim(user_agent="hail_map_app", timeout=10)  # Set timeout to 10 seconds
         for report in colorado_reports:
             lat = float(report.get('Lat')) / 100.0  # Convert to decimal degrees
             lon = float(report.get('Lon')) / -100.0  # Convert to decimal degrees
             heat_data.append([lat, lon])
             
-            location = geolocator.reverse(f"{lat},{lon}")
+            location = reverse_geocode(geolocator, lat, lon)
             if location and location.raw.get('address'):
                 zipcode = location.raw['address'].get('postcode')
                 if zipcode:
@@ -99,4 +110,3 @@ def generate_map():
         return None, ""
 
 # No need for app.run() here
-
