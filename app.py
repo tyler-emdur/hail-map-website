@@ -3,17 +3,48 @@ from datetime import datetime, timedelta
 import folium
 from folium.plugins import HeatMap
 from flask import Flask, render_template_string
-map_center = [39.831964, -104.963156]  # Coordinates to center the map
+from geopy.geocoders import Nominatim
+from collections import Counter
+
 app = Flask(__name__)
 
 @app.route('/')
 def home():
     # Generate the map dynamically
-    colorado_map = generate_map()
+    colorado_map, zip_code_html = generate_map()
     
-    # Render the map as HTML
+    # Render the map and zip code information as HTML
     map_html = colorado_map._repr_html_()  # Get the HTML representation of the map
-    return render_template_string(map_html)
+    
+    html_template = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Hail Reports Map</title>
+        <style>
+            .top-right {{
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                background-color: black;
+                color: white;
+                padding: 10px;
+                border-radius: 5px;
+                opacity: 0.8;
+                z-index: 1000;
+            }}
+        </style>
+    </head>
+    <body>
+        {map_html}
+        <div class="top-right">
+            {zip_code_html}
+        </div>
+    </body>
+    </html>
+    """
+    
+    return render_template_string(html_template)
 
 def generate_map():
     # Calculate the date range for the last two weeks
@@ -31,31 +62,40 @@ def generate_map():
 
         # Filter reports for hail ('HA') reports in Colorado ('CO')
         colorado_reports = [report for report in data if report.get('Type') == 'HA' and report.get('St') == 'CO']
+        
+        # Create a map centered on Colorado
         map_center = [39.0, -105.5]  # Coordinates to center the map
         colorado_map = folium.Map(location=map_center, zoom_start=7)
-        # Create a map centered on Colorado
 
-        # Add points for reports
+        # Prepare heat map data and collect zip codes
+        heat_data = []
+        zip_codes = []
+        geolocator = Nominatim(user_agent="hail_map_app")
         for report in colorado_reports:
             lat = float(report.get('Lat')) / 100.0  # Convert to decimal degrees
             lon = float(report.get('Lon')) / -100.0  # Convert to decimal degrees
-            popup_text = report.get('Remark', 'No remark')
-
-            folium.Marker(
-                location=[lat, lon],
-                popup=popup_text,
-                icon=folium.Icon(color='blue', icon='info-sign')
-            ).add_to(colorado_map)
-
-        # Convert points to list of lat-lon pairs for heat map
-        heat_data = [[float(report.get('Lat')) / 100.0, float(report.get('Lon')) / -100.0] for report in colorado_reports]
-
+            heat_data.append([lat, lon])
+            
+            location = geolocator.reverse(f"{lat},{lon}")
+            if location and location.raw.get('address'):
+                zipcode = location.raw['address'].get('postcode')
+                if zipcode:
+                    zip_codes.append(zipcode)
+        
         # Add heat map layer
         HeatMap(heat_data).add_to(colorado_map)
 
-        return colorado_map
+        # Count zip codes and create HTML
+        zip_code_counts = Counter(zip_codes)
+        zip_code_html = "<h3>Hail Reports by Zip Code (Last 2 Weeks)</h3>"
+        zip_code_html += "<ul>"
+        for zip_code, count in zip_code_counts.most_common():
+            zip_code_html += f"<li>{zip_code}: {count} reports</li>"
+        zip_code_html += "</ul>"
+
+        return colorado_map, zip_code_html
     else:
         print(f"Failed to retrieve data: {response.status_code}")
-        return None
+        return None, ""
 
 # No need for app.run() here
