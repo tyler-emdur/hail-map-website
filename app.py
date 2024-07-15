@@ -16,7 +16,7 @@ def home():
     return render_template_string(map_html)
 
 def generate_map():
-    # Calculate the date range for the last week
+    # Calculate the date range for the last two weeks
     end_date = datetime.now().strftime('%Y%m%d')
     start_date = (datetime.now() - timedelta(days=14)).strftime('%Y%m%d')
 
@@ -40,8 +40,7 @@ def generate_map():
         for report in colorado_reports:
             lat = float(report.get('Lat')) / 100.0  # Convert to decimal degrees
             lon = float(report.get('Lon')) / -100.0  # Convert to decimal degrees
-            hail_size = report.get('Size', 'Unknown')  # Get hail size, default to 'Unknown' if not present
-            popup_text = f"Hail Size: {hail_size}\"<br>{report.get('Remark', 'No remark')}"
+            popup_text = report.get('Remark', 'No remark')
 
             folium.Marker(
                 location=[lat, lon],
@@ -60,5 +59,4 @@ def generate_map():
         print(f"Failed to retrieve data: {response.status_code}")
         return None
 
-if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5000, debug=True)
+# No need for app.run() here
