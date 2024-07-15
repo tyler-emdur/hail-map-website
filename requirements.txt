@@ -14,3 +14,4 @@ requests==2.32.3
 urllib3==2.2.2
 Werkzeug==3.0.3
 xyzservices==2024.6.0
+gunicorn==22.0.0
