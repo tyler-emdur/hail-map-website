@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 import folium
 from folium.plugins import HeatMap
 from flask import Flask, render_template_string
-
+map_center = [39.831964, -104.963156]  # Coordinates to center the map
 app = Flask(__name__)
 
 @app.route('/')
@@ -31,10 +31,9 @@ def generate_map():
 
         # Filter reports for hail ('HA') reports in Colorado ('CO')
         colorado_reports = [report for report in data if report.get('Type') == 'HA' and report.get('St') == 'CO']
-
+        map_center = [39.0, -105.5]  # Coordinates to center the map
+        colorado_map = folium.Map(location=map_center, zoom_start=7)
         # Create a map centered on Colorado
-        map_center = [39.5501, -105.7821]  # Latitude and Longitude of Colorado's approximate center
-        colorado_map = folium.Map(location=map_center, zoom_start=6)
 
         # Add points for reports
         for report in colorado_reports:
