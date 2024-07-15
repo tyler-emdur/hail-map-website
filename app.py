@@ -48,10 +48,10 @@ def home():
     
     return render_template_string(html_template)
 
-def reverse_geocode(geolocator, lat, lon, retries=3, backoff_factor=0.3):
+def reverse_geocode(geolocator, lat, lon, retries=2, backoff_factor=0.5):
     for attempt in range(retries):
         try:
-            return geolocator.reverse(f"{lat},{lon}")
+            return geolocator.reverse(f"{lat},{lon}", timeout=10)
         except (GeocoderTimedOut, GeocoderServiceError) as e:
             print(f"Geocoding error: {e}. Retrying in {backoff_factor * (2 ** attempt)} seconds...")
             time.sleep(backoff_factor * (2 ** attempt))
