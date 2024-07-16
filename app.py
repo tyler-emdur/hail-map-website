@@ -7,17 +7,21 @@ from geopy.geocoders import Nominatim
 from geopy.exc import GeocoderTimedOut, GeocoderServiceError
 from collections import Counter
 import time
+from apscheduler.schedulers.background import BackgroundScheduler
+from pytz import timezone
+import atexit
 
 app = Flask(__name__)
 
+# Global variables to store the map and zip code HTML
+latest_map_html = ""
+latest_zip_code_html = ""
+
 @app.route('/')
 def home():
-    # Generate the map dynamically
-    colorado_map, zip_code_html = generate_map()
-    
+    global latest_map_html, latest_zip_code_html
+
     # Render the map and zip code information as HTML
-    map_html = colorado_map._repr_html_()  # Get the HTML representation of the map
-    
     html_template = f"""
     <!DOCTYPE html>
     <html>
@@ -38,9 +42,9 @@ def home():
         </style>
     </head>
     <body>
-        {map_html}
+        {latest_map_html}
         <div class="top-right">
-            {zip_code_html}
+            {latest_zip_code_html}
         </div>
     </body>
     </html>
@@ -58,7 +62,9 @@ def reverse_geocode(geolocator, lat, lon, retries=2, backoff_factor=0.5):
     return None
 
 def generate_map():
-    # Calculate the date range for the last two weeks
+    global latest_map_html, latest_zip_code_html
+
+    # Calculate the date range for the last week
     end_date = datetime.now().strftime('%Y%m%d')
     start_date = (datetime.now() - timedelta(days=7)).strftime('%Y%m%d')
 
@@ -104,9 +110,23 @@ def generate_map():
             zip_code_html += f"<li>{zip_code}: {count} reports</li>"
         zip_code_html += "</ul>"
 
-        return colorado_map, zip_code_html
+        latest_map_html = colorado_map._repr_html_()
+        latest_zip_code_html = zip_code_html
     else:
         print(f"Failed to retrieve data: {response.status_code}")
-        return None, ""
+        latest_map_html = ""
+        latest_zip_code_html = ""
 
-# No need for app.run() here
+# Schedule the update to run daily
+scheduler = BackgroundScheduler(timezone=timezone('America/Denver'))
+scheduler.add_job(func=generate_map, trigger='interval', days=1)
+scheduler.start()
+
+# Shut down the scheduler when exiting the app
+atexit.register(lambda: scheduler.shutdown())
+
+# Initial map generation
+generate_map()
+
+if __name__ == '__main__':
+    app.run()
