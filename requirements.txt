@@ -1,3 +1,4 @@
+APScheduler==3.10.4
 blinker==1.8.2
 branca==0.7.2
 certifi==2024.6.2
@@ -14,7 +15,10 @@ Jinja2==3.1.4
 MarkupSafe==2.1.5
 numpy==2.0.0
 packaging==24.1
+pytz==2024.1
 requests==2.32.3
+six==1.16.0
+tzlocal==5.2
 urllib3==2.2.2
 Werkzeug==3.0.3
 xyzservices==2024.6.0
