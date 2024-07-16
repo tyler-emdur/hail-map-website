@@ -60,7 +60,7 @@ def reverse_geocode(geolocator, lat, lon, retries=2, backoff_factor=0.5):
 def generate_map():
     # Calculate the date range for the last two weeks
     end_date = datetime.now().strftime('%Y%m%d')
-    start_date = (datetime.now() - timedelta(days=14)).strftime('%Y%m%d')
+    start_date = (datetime.now() - timedelta(days=7)).strftime('%Y%m%d')
 
     # Define the URL for the desired date range
     url = f"https://www.spc.noaa.gov/exper/reports/v3/src/getAllReports.php?combine&start={start_date}&end={end_date}&json"
