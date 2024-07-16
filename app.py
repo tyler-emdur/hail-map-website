@@ -29,7 +29,7 @@ def home():
                 top: 10px;
                 right: 10px;
                 background-color: black;
-                color: blue;
+                color: white;
                 padding: 10px;
                 border-radius: 5px;
                 opacity: 0.8;
