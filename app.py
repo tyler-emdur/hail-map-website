@@ -29,7 +29,7 @@ def home():
                 top: 10px;
                 right: 10px;
                 background-color: black;
-                color: white;
+                color: blue;
                 padding: 10px;
                 border-radius: 5px;
                 opacity: 0.8;
@@ -98,7 +98,7 @@ def generate_map():
 
         # Count zip codes and create HTML
         zip_code_counts = Counter(zip_codes)
-        zip_code_html = "<h3>Hail Reports by Zip Code (Last 2 Weeks)</h3>"
+        zip_code_html = "<h3>Hail Reports by Zip Code (Last 7 days)</h3>"
         zip_code_html += "<ul>"
         for zip_code, count in zip_code_counts.most_common():
             zip_code_html += f"<li>{zip_code}: {count} reports</li>"
